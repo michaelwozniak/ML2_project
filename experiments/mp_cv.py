@@ -32,4 +32,26 @@ def mp_cv(train_valid_setup):
     Y_dists = ngb.pred_dist(test[features])
     
     return [Y_dists.dist.ppf(0.01)[0], Y_dists.dist.ppf(0.025)[0]]
+
+def mp_cv_ET_hyp_tuning(train_valid_setup):
+    train = train_valid_setup[0]
+    test = train_valid_setup[1]
+    
+    ngb = ngboost.NGBRegressor(
+            Dist=ngboost.distns.Laplace,
+            Score=ngboost.scores.LogScore,
+            Base=ExtraTreeRegressor(max_depth = train_valid_setup[2], 
+                                    min_samples_split = train_valid_setup[3]),
+            n_estimators=500,
+            learning_rate=0.01,
+            minibatch_frac=1.0,
+            col_sample=1.0,
+            verbose=False,
+            verbose_eval=500,
+            tol=0.0001,
+            random_state=2021)
+    ngb.fit(train[features], train["rr"])
+    Y_dists = ngb.pred_dist(test[features])
+    
+    return [Y_dists.dist.ppf(0.01)[0], Y_dists.dist.ppf(0.025)[0]]
     
