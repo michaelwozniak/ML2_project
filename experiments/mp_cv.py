@@ -55,3 +55,34 @@ def mp_cv_ET_hyp_tuning(train_valid_setup):
     
     return [Y_dists.dist.ppf(0.01)[0], Y_dists.dist.ppf(0.025)[0]]
     
+    
+def mp_cv_ET_final_hyp_tuning(train_valid_setup):
+    train = train_valid_setup[0]
+    test = train_valid_setup[1]
+    dist = train_valid_setup[2]
+    eta = train_valid_setup[3]
+    it = train_valid_setup[4]
+    
+    if dist == "Laplace":
+        dist_ = ngboost.distns.Laplace
+    elif dist == "Normal":
+        dist_ = ngboost.distns.Normal
+    elif dist == "T":
+        dist_ = ngboost.distns.TFixedDf
+    
+    ngb = ngboost.NGBRegressor(
+            Dist=dist_,
+            Score=ngboost.scores.LogScore,
+            Base=ExtraTreeRegressor(max_depth = 3, min_samples_split = 2),
+            n_estimators=it,
+            learning_rate=eta,
+            minibatch_frac=1.0,
+            col_sample=1.0,
+            verbose=False,
+            verbose_eval=500,
+            tol=0.0001,
+            random_state=2021)
+    ngb.fit(train[features], train["rr"])
+    Y_dists = ngb.pred_dist(test[features])
+    
+    return [Y_dists.dist.ppf(0.01)[0], Y_dists.dist.ppf(0.025)[0]]
