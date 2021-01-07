@@ -56,12 +56,13 @@ def mp_cv_ET_hyp_tuning(train_valid_setup):
     return [Y_dists.dist.ppf(0.01)[0], Y_dists.dist.ppf(0.025)[0]]
     
     
-def mp_cv_ET_final_hyp_tuning(train_valid_setup):
+def final_model(train_valid_setup):
     train = train_valid_setup[0]
     test = train_valid_setup[1]
     dist = train_valid_setup[2]
     eta = train_valid_setup[3]
     it = train_valid_setup[4]
+    alpha = train_valid_setup[5]
     
     if dist == "Laplace":
         dist_ = ngboost.distns.Laplace
@@ -85,4 +86,4 @@ def mp_cv_ET_final_hyp_tuning(train_valid_setup):
     ngb.fit(train[features], train["rr"])
     Y_dists = ngb.pred_dist(test[features])
     
-    return [Y_dists.dist.ppf(0.01)[0], Y_dists.dist.ppf(0.025)[0]]
+    return Y_dists.dist.ppf(alpha)[0]
