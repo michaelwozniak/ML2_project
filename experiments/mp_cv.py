@@ -162,3 +162,48 @@ def final_model_ensembling(train_valid_setup):
     VaR1_GARCH, VaR25_GARCH = cond_mean + np.sqrt(cond_var) * q
     
     return (VaR1_NGB + VaR1_GARCH)/2,(VaR25_NGB + VaR25_GARCH)/2 
+
+def final_model_switching(train_valid_setup):
+    train = train_valid_setup[0]
+    test = train_valid_setup[1]
+    dist = train_valid_setup[2]
+    eta = train_valid_setup[3]
+    it = train_valid_setup[4]
+    switch = train_valid_setup[5]
+    
+    if dist == "Laplace":
+        dist_ = ngboost.distns.Laplace
+    elif dist == "T":
+        dist_ = ngboost.distns.TFixedDf
+    
+    ngb = ngboost.NGBRegressor(
+            Dist=dist_,
+            Score=ngboost.scores.LogScore,
+            Base=ExtraTreeRegressor(max_depth = 3, min_samples_split = 2),
+            n_estimators=it,
+            learning_rate=eta,
+            minibatch_frac=1.0,
+            col_sample=1.0,
+            verbose=False,
+            verbose_eval=500,
+            tol=0.0001,
+            random_state=2021)
+    ngb.fit(train[features], train["rr"])
+    Y_dists = ngb.pred_dist(test[features])
+    VaR1_NGB, VaR25_NGB = Y_dists.dist.ppf(0.01)[0], Y_dists.dist.ppf(0.025)[0] 
+    
+    am = arch_model(train["rr"], vol="GARCH", p=1, o=0, q=1, dist="normal", mean="AR", lags=1)
+    res = am.fit(disp="off")
+    forecasts = res.forecast(horizon=1)
+    cond_mean = forecasts.mean.iloc[-1, 0]
+    cond_var = forecasts.variance.iloc[-1, 0]
+    stan_resid = res.resid[1:] / res.conditional_volatility[1:]
+    q = np.percentile(stan_resid, [1, 2.5])
+    VaR1_GARCH, VaR25_GARCH = cond_mean + np.sqrt(cond_var) * q
+    
+    if switch == 1:
+        return VaR1_GARCH, VaR25_GARCH
+    else:
+        return VaR1_NGB, VaR25_NGB
+    
+
