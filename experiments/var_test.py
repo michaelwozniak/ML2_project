@@ -3,6 +3,7 @@ import pandas as pd
 from scipy.stats import chi2, norm, t
 from scipy.optimize import minimize
 
+#source: https://github.com/dkaszynski/VVaR
 
 def get_dict_tests():
     """The dictionary of the implemented and available VaR backtests
