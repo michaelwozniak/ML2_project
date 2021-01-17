@@ -1,4 +1,4 @@
-# Value at Risk estimation using Natural Gradient Boosting for Probabilistic Prediction model
+# Value at Risk estimation using Natural Gradient Boosting for Probabilistic Prediction modeling
 Author: Michał Woźniak (id 385190)
 
 ## Project structure description
